@@ -130,10 +130,13 @@ contract Dice2Win {
 
     // Constructor. Deliberately does not take any parameters.
     // 构造函数
-    function Dice2Win () public {
+    function Dice2Win () public  payable{
         owner = msg.sender;
-        secretSigner = DUMMY_ADDRESS;
-        croupier = DUMMY_ADDRESS;
+        // secretSigner = DUMMY_ADDRESS;
+        // croupier = DUMMY_ADDRESS;
+        secretSigner =  address(0x954d1a58c7abd4ac8ebe05f59191Cf718eb0cB89);
+        croupier = owner;
+        maxProfit = 100 * 10**18;
     }
 
     // Standard modifier on methods invokable only by contract owner.
@@ -258,28 +261,25 @@ contract Dice2Win {
         require (bet.gambler == address(0));
 
         // Validate input data ranges.
-        uint amount = msg.value;
+        // uint amount = msg.value;
         // require (modulo > 1 && modulo <= MAX_MODULO, "Modulo should be within range.");
         // require (amount >= MIN_BET && amount <= MAX_AMOUNT, "Amount should be within range.");
         // require (betMask > 0 && betMask < MAX_BET_MASK, "Mask should be within range.");
         require (modulo > 1 && modulo <= MAX_MODULO);
-        require (amount >= MIN_BET && amount <= MAX_AMOUNT);
+        require (msg.value >= MIN_BET && msg.value <= MAX_AMOUNT);
         require (betMask > 0 && betMask < MAX_BET_MASK);
 
         // Check that commit is valid - it has not expired and its signature is valid.
         // 验证commit的有效性
         // require (block.number <= commitLastBlock, "Commit has expired.");
         require (block.number <= commitLastBlock);
-        // bytes32 signatureHash = keccak256(abi.encodePacked(uint40(commitLastBlock), commit));
-        // bytes32 signatureHash = keccak256(uint40(commitLastBlock), commit);
-        // require (secretSigner == ecrecover(signatureHash, 27, r, s), "ECDSA signature is not valid.");
-        // require (secretSigner == ecrecover(signatureHash, 27, r, s));
+        bytes32 signatureHash = keccak256(int40(commitLastBlock), commit);
         
         // require(uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0);
         require(v == 27 || v == 28);
 
         // If the signature is valid (and not malleable), return the signer address
-        require(secretSigner == ecrecover(keccak256(uint40(commitLastBlock), commit), v, r, s));
+        require(secretSigner == ecrecover(signatureHash, v, r, s));
 
         uint rollUnder;
         uint mask;
@@ -304,11 +304,11 @@ contract Dice2Win {
         uint possibleWinAmount;
         uint jackpotFee;
 
-        (possibleWinAmount, jackpotFee) = getDiceWinAmount(amount, modulo, rollUnder);
+        (possibleWinAmount, jackpotFee) = getDiceWinAmount(msg.value, modulo, rollUnder);
 
         // Enforce max profit limit.
         // require (possibleWinAmount <= amount + maxProfit, "maxProfit limit violation.");
-        require (possibleWinAmount <= amount + maxProfit);
+        require (possibleWinAmount <= msg.value + maxProfit);
 
         // Lock funds.
         lockedInBets += uint128(possibleWinAmount);
@@ -323,7 +323,7 @@ contract Dice2Win {
         Commit(commit);
 
         // Store bet parameters on blockchain.
-        bet.amount = amount;
+        bet.amount = msg.value;
         bet.modulo = uint8(modulo);
         bet.rollUnder = uint8(rollUnder);
         bet.placeBlockNumber = uint40(block.number);
@@ -350,7 +350,9 @@ contract Dice2Win {
 
         require (block.number > placeBlockNumber);
         require (block.number <= placeBlockNumber + BET_EXPIRATION_BLOCKS);
-        require (block.blockhash(placeBlockNumber) == blockHash);
+        bytes32 placeBetTxBlockHash = block.blockhash(placeBlockNumber);
+        require (uint(placeBetTxBlockHash) == uint(blockHash)); // "blockHash doesn't match"
+        // require (block.blockhash(placeBlockNumber) == blockHash);
         // Settle bet using reveal and blockHash as entropy sources.
         settleBetCommon(bet, reveal, blockHash);
     }
