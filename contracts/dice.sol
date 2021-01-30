@@ -1,15 +1,5 @@
 pragma solidity ^0.4.20;
 
-// * dice2.win - fair games that pay Ether. Version 5.
-//
-// * Ethereum smart contract, deployed at 0xD1CEeeeee83F8bCF3BEDad437202b6154E9F5405.
-//
-// * Uses hybrid commit-reveal + block hash random number generation that is immune
-//   to tampering by players, house and miners. Apart from being fully transparent,
-//   this also allows arbitrarily high bets.
-//
-// * Refer to https://dice2.win/whitepaper.pdf for detailed description and proofs.
-
 contract Dice2Win {
     /// *** Constants section
 
@@ -290,7 +280,7 @@ contract Dice2Win {
             // This magic looking formula is an efficient way to compute population
             // count on EVM for numbers below 2**40. For detailed proof consult
             // the dice2.win whitepaper.
-             rollUnder = ((betMask * POPCNT_MULT) & POPCNT_MASK) % POPCNT_MODULO;
+            rollUnder = ((betMask * POPCNT_MULT) & POPCNT_MASK) % POPCNT_MODULO;
             mask = betMask;
         } else {
             // Larger modulos specify the right edge of half-open interval of
@@ -335,7 +325,7 @@ contract Dice2Win {
     // "commit", settleBet should supply a "reveal" number that would Keccak256-hash to
     // "commit". "blockHash" is the block hash of placeBet block as seen by croupier; it
     // is additionally asserted to prevent changing the bet outcomes on Ethereum reorgs.
-    // 下注/结算
+    // 结算
     function settleBet(uint reveal, bytes32 blockHash) external onlyCroupier {
         // uint commit = uint(keccak256(abi.encodePacked(reveal)));
         uint commit = uint(keccak256(reveal));
