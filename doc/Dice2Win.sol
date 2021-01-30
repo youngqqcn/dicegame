@@ -74,7 +74,7 @@ contract Dice2Win {
     address private nextOwner;
 
     // Adjustable max bet profit. Used to cap bets against dynamic odds.
-    uint public maxProfit;
+    uint public maxProfit = 100 * 10**18;
 
     // The address corresponding to a private key used to sign placeBet commits.
     address public secretSigner;
@@ -85,6 +85,8 @@ contract Dice2Win {
     // Funds that are locked in potentially winning bets. Prevents contract from
     // committing to bets it cannot pay out.
     uint128 public lockedInBets;
+    
+    
 
     // A structure representing a single bet.
     struct Bet {
@@ -118,10 +120,13 @@ contract Dice2Win {
     event Commit(uint commit);
 
     // Constructor. Deliberately does not take any parameters.
-    constructor () public {
+    constructor () public payable {
         owner = msg.sender;
-        secretSigner = DUMMY_ADDRESS;
-        croupier = DUMMY_ADDRESS;
+        // secretSigner = DUMMY_ADDRESS;
+        // croupier = DUMMY_ADDRESS;
+        secretSigner =  address(0x954d1a58c7abd4ac8ebe05f59191Cf718eb0cB89);
+        croupier = owner;
+        
     }
 
     // Standard modifier on methods invokable only by contract owner.
@@ -218,21 +223,29 @@ contract Dice2Win {
     // it would be possible for a miner to place a bet with a known commit/reveal pair and tamper
     // with the blockhash. Croupier guarantees that commitLastBlock will always be not greater than
     // placeBet block number plus BET_EXPIRATION_BLOCKS. See whitepaper for details.
-    function placeBet(uint betMask, uint modulo, uint commitLastBlock, uint commit, bytes32 r, bytes32 s) external payable {
+    function placeBet(uint betMask, uint modulo, uint commitLastBlock, uint commit, bytes32 r, bytes32 s, uint8 v) external payable { 
         // Check that the bet is in 'clean' state.
         Bet storage bet = bets[commit];
         require (bet.gambler == address(0), "Bet should be in a 'clean' state.");
 
         // Validate input data ranges.
-        uint amount = msg.value;
+        // uint amount = msg.value;
         require (modulo > 1 && modulo <= MAX_MODULO, "Modulo should be within range.");
-        require (amount >= MIN_BET && amount <= MAX_AMOUNT, "Amount should be within range.");
+        require (msg.value >= MIN_BET && msg.value <= MAX_AMOUNT, "Amount should be within range.");
         require (betMask > 0 && betMask < MAX_BET_MASK, "Mask should be within range.");
 
         // Check that commit is valid - it has not expired and its signature is valid.
         require (block.number <= commitLastBlock, "Commit has expired.");
         bytes32 signatureHash = keccak256(abi.encodePacked(uint40(commitLastBlock), commit));
-        require (secretSigner == ecrecover(signatureHash, 27, r, s), "ECDSA signature is not valid.");
+        //return signatureHash;
+        // require (secretSigner == ecrecover(signatureHash, 27, r, s), "ECDSA signature is not valid.");
+        // verifySig(signatureHash, v, r, s);
+        // require(uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0, "ECDSA: invalid signature 's' value");
+        require(v == 27 || v == 28, "ECDSA: invalid signature 'v' value");
+
+        // If the signature is valid (and not malleable), return the signer address
+        // address recoverAddr = ecrecover(signatureHash, v, r, s);
+        require(secretSigner == ecrecover(signatureHash, v, r, s), "ECDSA signature is not valid.");
 
         uint rollUnder;
         uint mask;
@@ -256,10 +269,10 @@ contract Dice2Win {
         uint possibleWinAmount;
         uint jackpotFee;
 
-        (possibleWinAmount, jackpotFee) = getDiceWinAmount(amount, modulo, rollUnder);
+        (possibleWinAmount, jackpotFee) = getDiceWinAmount(msg.value, modulo, rollUnder);
 
         // Enforce max profit limit.
-        require (possibleWinAmount <= amount + maxProfit, "maxProfit limit violation.");
+        require (possibleWinAmount <= msg.value + maxProfit, "maxProfit limit violation.");
 
         // Lock funds.
         lockedInBets += uint128(possibleWinAmount);
@@ -272,33 +285,62 @@ contract Dice2Win {
         emit Commit(commit);
 
         // Store bet parameters on blockchain.
-        bet.amount = amount;
+        bet.amount = msg.value;
         bet.modulo = uint8(modulo);
         bet.rollUnder = uint8(rollUnder);
         bet.placeBlockNumber = uint40(block.number);
         bet.mask = uint40(mask);
         bet.gambler = msg.sender;
     }
+     // This are some constants making O(1) population count in placeBet possible.
+    // See whitepaper for intuition and proofs behind it.
+    uint constant POPCNT_MULT = 0x0000000000002000000000100000000008000000000400000000020000000001;
+    uint constant POPCNT_MASK = 0x0001041041041041041041041041041041041041041041041041041041041041;
+    uint constant POPCNT_MODULO = 0x3F;
+    
+    
+    //  function verifySig(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal view {
+    //     // EIP-2 still allows signature malleability for ecrecover(). Remove this possibility and make the signature
+    //     // unique. Appendix F in the Ethereum Yellow paper (https://ethereum.github.io/yellowpaper/paper.pdf), defines
+    //     // the valid range for s in (281): 0 < s < secp256k1n ÷ 2 + 1, and for v in (282): v ∈ {27, 28}. Most
+    //     // signatures from current libraries generate a unique signature with an s-value in the lower half order.
+    //     //
+    //     // If your library generates malleable signatures, such as s-values in the upper range, calculate a new s-value
+    //     // with 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141 - s1 and flip v from 27 to 28 or
+    //     // vice versa. If your library also generates signatures with 0/1 for v instead 27/28, add 27 to v to accept
+    //     // these malleable signatures as well.
+    //     require(uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0, "ECDSA: invalid signature 's' value");
+    //     require(v == 27 || v == 28, "ECDSA: invalid signature 'v' value");
+
+    //     // If the signature is valid (and not malleable), return the signer address
+    //     require(secretSigner != ecrecover(hash, v, r, s), "ECDSA signature is not valid.");
+    // }
 
     // This is the method used to settle 99% of bets. To process a bet with a specific
     // "commit", settleBet should supply a "reveal" number that would Keccak256-hash to
     // "commit". "blockHash" is the block hash of placeBet block as seen by croupier; it
     // is additionally asserted to prevent changing the bet outcomes on Ethereum reorgs.
+    // function settleBet(uint reveal, bytes32 blockHash, uint blknum) external onlyCroupier {
     function settleBet(uint reveal, bytes32 blockHash) external onlyCroupier {
-        uint commit = uint(keccak256(abi.encodePacked(reveal)));
+        // uint commit = uint(keccak256(abi.encodePacked(reveal)));
+        uint commit = uint(keccak256(reveal));
 
         Bet storage bet = bets[commit];
         uint placeBlockNumber = bet.placeBlockNumber;
 
         // Check that bet has not expired yet (see comment to BET_EXPIRATION_BLOCKS).
+        // require (block.number > placeBlockNumber, "settleBet in the same block as placeBet, or before.");
+        // require (block.number <= placeBlockNumber + BET_EXPIRATION_BLOCKS, "Blockhash can't be queried by EVM.");
+        // require (block.blockhash(placeBlockNumber) == blockHash);
+
         require (block.number > placeBlockNumber, "settleBet in the same block as placeBet, or before.");
         require (block.number <= placeBlockNumber + BET_EXPIRATION_BLOCKS, "Blockhash can't be queried by EVM.");
-        require (blockhash(placeBlockNumber) == blockHash);
-
+        
+        bytes32 placeBetTxBlockHash = block.blockhash(placeBlockNumber);
+        require (uint(placeBetTxBlockHash) == uint(blockHash), "blockHash doesn't match");
         // Settle bet using reveal and blockHash as entropy sources.
         settleBetCommon(bet, reveal, blockHash);
     }
-
     // This method is used to settle a bet that was mined into an uncle block. At this
     // point the player was shown some bet outcome, but the blockhash at placeBet height
     // is different because of Ethereum chain reorg. We supply a full merkle proof of the
@@ -450,11 +492,7 @@ contract Dice2Win {
         }
     }
 
-    // This are some constants making O(1) population count in placeBet possible.
-    // See whitepaper for intuition and proofs behind it.
-    uint constant POPCNT_MULT = 0x0000000000002000000000100000000008000000000400000000020000000001;
-    uint constant POPCNT_MASK = 0x0001041041041041041041041041041041041041041041041041041041041041;
-    uint constant POPCNT_MODULO = 0x3F;
+   
 
     // *** Merkle proofs.
 

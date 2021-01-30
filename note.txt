@@ -1,0 +1,46 @@
+===========
+没有成功, 不知道是否和 recoverid 有关
+
+9
+2
+100
+0x9af8e1b0a19e91651efd5a5b58e1537fb85adebc80d81da55546b5b41363984e
+"0xf003eed958882786d268d6b041e4940c160ec89761191e7cc0c5787e2ea8b1aa"
+"0x7e77739777e8557bd7c6ac75ebef8fe8e10e880eea491cbc10357a42abb219c5"
+=============
+
+======================
+下面用以太坊上的真实交易进行验证, 并且成功调用了placeBet
+https://cn.etherscan.com/tx/0x7323a18cd56f6750b8c29b76cebb2a3fbbf3c2b03e59941090c5daeba59d301f
+
+secretSigner
+0xb00b5ca7ec0502f2f269e99b91ebbccbce9cccec address
+
+0xc739ce30
+0x24
+0xb34464
+0x24027f1fe6692863385b95ab253f0700a35d03a8967dff8588e2de6b066b44e4
+"0x2e608766579a55fffd6d7872e89d56642980358160b877fdb00855e716a8cbeb"
+"0x3faac77026378c125f5ead4bb0cbf303554ba85d9920d158a9aacecfa2ada6a8"
+
+==========================
+
+
+=================以下是成功的记录
+
+reveal是 20
+lastCommitBlock 是  166
+secretSigner 是 0x954d1a58c7abd4ac8ebe05f59191Cf718eb0cB89
+
+-----
+0xc739ce30
+0x24
+166
+0xce6d7b5282bd9a3661ae061feed1dbda4e52ab073b1f9285be6e155d9c38d4ec
+"0x27d662f696b6b054ddc1a7f6161a0330c65f329bad82e02e5163f37fc63ac775"
+"0x1440e0ff2704a3d9d2f53fe27699d21e6b1dc39622b434448782644ffd7964ce"
+27
+----
+
+
+
