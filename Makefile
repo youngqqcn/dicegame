@@ -19,5 +19,8 @@ clean:
 	- rm -rf ./contract/artifacts
 
 
+deploy:
+	node --stack-size=1200  deploy.js
+
 remixd:
 	remixd -s /data/work/dicegame  --remix-ide http://localhost:8080

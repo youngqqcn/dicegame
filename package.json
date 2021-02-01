@@ -1,0 +1,34 @@
+{
+  "name": "dicegame",
+  "version": "1.0.0",
+  "description": "the dicegame  ",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/youngqqcn/dicegame.git"
+  },
+  "keywords": [
+    "solidity",
+    "dicegame",
+    "gambling"
+  ],
+  "author": "yqq",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/youngqqcn/dicegame/issues"
+  },
+  "homepage": "https://github.com/youngqqcn/dicegame#readme",
+  "dependencies": {
+    "mocha": "^8.2.1",
+    "solc": "^0.4.20",
+    "truffle-hdwallet-provider": "^1.0.17",
+    "web3": "^1.3.3"
+  }
+}

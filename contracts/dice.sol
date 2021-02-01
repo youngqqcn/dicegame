@@ -141,6 +141,15 @@ contract Dice2Win {
         require (msg.sender == croupier);
         _;
     }
+    
+    function getBet(uint commit) public view returns (uint amount, uint modulo, uint placeBlockNumber, uint mask, address gambler ) {
+        Bet storage bet = bets[commit];
+        amount = bet.amount;
+        modulo = bet.modulo;
+        placeBlockNumber = bet.placeBlockNumber;
+        mask = bet.mask;
+        gambler = bet.gambler;
+    }
 
     // Standard contract ownership transfer implementation,
     function approveNextOwner(address _nextOwner) external onlyOwner {
