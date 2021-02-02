@@ -259,75 +259,75 @@ contract Dice2Win {
         // require (bet.gambler == address(0), "Bet should be in a 'clean' state.");
         require (bet.gambler == address(0));
 
-        // Validate input data ranges.
-        // uint amount = msg.value;
-        // require (modulo > 1 && modulo <= MAX_MODULO, "Modulo should be within range.");
-        // require (amount >= MIN_BET && amount <= MAX_AMOUNT, "Amount should be within range.");
-        // require (betMask > 0 && betMask < MAX_BET_MASK, "Mask should be within range.");
-        require (modulo > 1 && modulo <= MAX_MODULO);
-        require (msg.value >= MIN_BET && msg.value <= MAX_AMOUNT);
-        require (betMask > 0 && betMask < MAX_BET_MASK);
-
-        // Check that commit is valid - it has not expired and its signature is valid.
-        // 验证commit的有效性
-        // require (block.number <= commitLastBlock, "Commit has expired.");
-        require (block.number <= commitLastBlock);
-        bytes32 signatureHash = keccak256(int40(commitLastBlock), commit);
-        
-        // require(uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0);
-        require(v == 27 || v == 28);
+//        // Validate input data ranges.
+//        // uint amount = msg.value;
+//        // require (modulo > 1 && modulo <= MAX_MODULO, "Modulo should be within range.");
+//        // require (amount >= MIN_BET && amount <= MAX_AMOUNT, "Amount should be within range.");
+//        // require (betMask > 0 && betMask < MAX_BET_MASK, "Mask should be within range.");
+//        require (modulo > 1 && modulo <= MAX_MODULO);
+//        require (msg.value >= MIN_BET && msg.value <= MAX_AMOUNT);
+//        require (betMask > 0 && betMask < MAX_BET_MASK);
+//
+//        // Check that commit is valid - it has not expired and its signature is valid.
+//        // 验证commit的有效性
+//        // require (block.number <= commitLastBlock, "Commit has expired.");
+//        require (block.number <= commitLastBlock);
+//        bytes32 signatureHash = keccak256(int40(commitLastBlock), commit);
+//
+//        // require(uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0);
+//        require(v == 27 || v == 28);
 
         // If the signature is valid (and not malleable), return the signer address
-        require(secretSigner == ecrecover(signatureHash, v, r, s));
-
-        uint rollUnder;
-        uint mask;
-
-        if (modulo <= MAX_MASK_MODULO) {
-            // Small modulo games specify bet outcomes via bit mask.
-            // rollUnder is a number of 1 bits in this mask (population count).
-            // This magic looking formula is an efficient way to compute population
-            // count on EVM for numbers below 2**40. For detailed proof consult
-            // the dice2.win whitepaper.
-            rollUnder = ((betMask * POPCNT_MULT) & POPCNT_MASK) % POPCNT_MODULO;
-            mask = betMask;
-        } else {
-            // Larger modulos specify the right edge of half-open interval of
-            // winning bet outcomes.
-            // require (betMask > 0 && betMask <= modulo, "High modulo range, betMask larger than modulo.");
-            require (betMask > 0 && betMask <= modulo);
-            rollUnder = betMask;
-        }
-
-        // Winning amount and jackpot increase.
-        uint possibleWinAmount;
-        uint jackpotFee;
-
-        (possibleWinAmount, jackpotFee) = getDiceWinAmount(msg.value, modulo, rollUnder);
-
-        // Enforce max profit limit.
-        // require (possibleWinAmount <= amount + maxProfit, "maxProfit limit violation.");
-        require (possibleWinAmount <= msg.value + maxProfit);
-
-        // Lock funds.
-        lockedInBets += uint128(possibleWinAmount);
-        jackpotSize += uint128(jackpotFee);
-
-        // Check whether contract has enough funds to process this bet.
-        // 确保如果赌输了合约地址有足够的钱支付赌金
-        // require (jackpotSize + lockedInBets <= address(this).balance, "Cannot afford to lose this bet.");
-        require (jackpotSize + lockedInBets <= address(this).balance);
-
-        // Record commit in logs.
-        Commit(commit);
-
-        // Store bet parameters on blockchain.
-        bet.amount = msg.value;
-        bet.modulo = uint8(modulo);
-        bet.rollUnder = uint8(rollUnder);
-        bet.placeBlockNumber = uint40(block.number);
-        bet.mask = uint40(mask);
-        bet.gambler = msg.sender;
+//        require(secretSigner == ecrecover(signatureHash, v, r, s));
+//
+//        uint rollUnder;
+//        uint mask;
+//
+//        if (modulo <= MAX_MASK_MODULO) {
+//            // Small modulo games specify bet outcomes via bit mask.
+//            // rollUnder is a number of 1 bits in this mask (population count).
+//            // This magic looking formula is an efficient way to compute population
+//            // count on EVM for numbers below 2**40. For detailed proof consult
+//            // the dice2.win whitepaper.
+//            rollUnder = ((betMask * POPCNT_MULT) & POPCNT_MASK) % POPCNT_MODULO;
+//            mask = betMask;
+//        } else {
+//            // Larger modulos specify the right edge of half-open interval of
+//            // winning bet outcomes.
+//            // require (betMask > 0 && betMask <= modulo, "High modulo range, betMask larger than modulo.");
+//            require (betMask > 0 && betMask <= modulo);
+//            rollUnder = betMask;
+//        }
+//
+//        // Winning amount and jackpot increase.
+//        uint possibleWinAmount;
+//        uint jackpotFee;
+//
+//        (possibleWinAmount, jackpotFee) = getDiceWinAmount(msg.value, modulo, rollUnder);
+//
+//        // Enforce max profit limit.
+//        // require (possibleWinAmount <= amount + maxProfit, "maxProfit limit violation.");
+//        require (possibleWinAmount <= msg.value + maxProfit);
+//
+//        // Lock funds.
+//        lockedInBets += uint128(possibleWinAmount);
+//        jackpotSize += uint128(jackpotFee);
+//
+//        // Check whether contract has enough funds to process this bet.
+//        // 确保如果赌输了合约地址有足够的钱支付赌金
+//        // require (jackpotSize + lockedInBets <= address(this).balance, "Cannot afford to lose this bet.");
+//        require (jackpotSize + lockedInBets <= address(this).balance);
+//
+//        // Record commit in logs.
+//        Commit(commit);
+//
+//        // Store bet parameters on blockchain.
+//        bet.amount = msg.value;
+//        bet.modulo = uint8(modulo);
+//        bet.rollUnder = uint8(rollUnder);
+//        bet.placeBlockNumber = uint40(block.number);
+//        bet.mask = uint40(mask);
+//        bet.gambler = msg.sender;
     }
 
     // This is the method used to settle 99% of bets. To process a bet with a specific

@@ -15,7 +15,7 @@ contract('dice', (accounts) => {
         // diceInst = await Dice2Win.new({ from: accounts[0], value:  web3.utils.toWei( '300', 'ether' ) });
         // 部署新的合约
         // diceInst = await Dice2Win.deployed();  // await Dice2Win.new({ from: accounts[0], value:  web3.utils.toWei( '300', 'ether' ) });
-        diceInst = await Dice2Win.at("0x1481824886d472Bb2bDd42867b8207941F47b45E");
+        diceInst = await Dice2Win.at("0xd0Cf2D08D6818916d893Fb134AF9425463267EC0");
     });
 
     it('dicegame', async () => {
