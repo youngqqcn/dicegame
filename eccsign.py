@@ -85,7 +85,7 @@ def test_sign():
 
 def test_playbet():
     lastBlock = 166
-    reveal = 20
+    reveal = 21
     commitLastBlock = unhexlify('%010x' % lastBlock)  # 和uint40对应
     commit = keccak(  unhexlify('%064x' % reveal) )
     print('0x' + commit.hex() )
