@@ -15,7 +15,7 @@ contract('dice', (accounts) => {
         // diceInst = await Dice2Win.new({ from: accounts[0], value:  web3.utils.toWei( '300', 'ether' ) });
         // 部署新的合约
         // diceInst = await Dice2Win.deployed();  // await Dice2Win.new({ from: accounts[0], value:  web3.utils.toWei( '300', 'ether' ) });
-        diceInst = await Dice2Win.at("0xd0Cf2D08D6818916d893Fb134AF9425463267EC0");
+        diceInst = await Dice2Win.at("0x91Cecaf089677cE39dE2CD52DcF4E931677f5f88");
     });
 
     it('dicegame', async () => {
@@ -25,21 +25,27 @@ contract('dice', (accounts) => {
 
         let block = await web3.eth.getBlock("latest");
         console.log(block)
-        lastBlock = block.number + 200;
+        lastBlock =  100; // block.number + 200;
 
         let buf = crypto.randomBytes(32);
-        let reveal = BigInt("0x" + Buffer.from(buf).toString("hex"))
+        let reveal = 99 ; //BigInt("0x" + Buffer.from(buf).toString("hex"))
         console.log(reveal)
 
         console.log("reveal: ", reveal)
         commitLastBlock = sp.sprintf("%010x", lastBlock);
-        console.log(commitLastBlock)
-        hexReveal = reveal.toString(16) 
+        console.log('commitLastBlock, ', commitLastBlock)
+        hexReveal = reveal.toString(16)
+
+        for(let i = hexReveal.length; i < 64; i++)
+        {
+            hexReveal = '0' + hexReveal;
+        }
+
         console.log(hexReveal)
         commit = web3.utils.sha3(Buffer.from(hexReveal, "hex"))
         console.log(commit)
         sh3 = web3.utils.soliditySha3({ type: 'uint40', value: lastBlock }, { type: 'bytes32', value: commit });
-        console.log(sh3)
+        console.log('sh3', sh3)
         msg = commitLastBlock + commit.replaceAll("0x", "")
         console.log(msg)
         console.log(msg.length)
@@ -65,7 +71,7 @@ contract('dice', (accounts) => {
             Buffer.from(r),
             Buffer.from(s),
             v,
-            { 'from': accounts[1], 'value': web3.utils.toWei('2', 'ether'), 'password': '12345678' }
+            { 'from': accounts[0], 'value': web3.utils.toWei('2', 'ether'), 'password': '12345678' }
         );
 
         console.log("result:", result)
@@ -73,11 +79,13 @@ contract('dice', (accounts) => {
 
         assert.strictEqual(result.receipt.status, true)
 
+        blockHash = result.receipt.blockHash.replaceAll("0x", "")
+        console.log("blockHash is , ", blockHash)
 
         // 开将
         let result2 = await diceInst.settleBet(
             reveal,
-            Buffer.from(result.receipt.blockHash.replaceAll("0x", ""), "hex"),
+            Buffer.from(blockHash, "hex"),
         );
 
         console.log(result2)
