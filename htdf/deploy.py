@@ -48,7 +48,7 @@ def parse_truffe_compile_outputs(json_path: str):
 
 
 # @pytest.fixture(scope='module', autouse=True)
-def test_create_hrc20_token_contract(conftest_args, bytecode):
+def test_deploy_contract(conftest_args, bytecode):
     """
     test create hrc20 token contract which implement HRC20.
     # test contract AJC.sol
@@ -58,7 +58,7 @@ def test_create_hrc20_token_contract(conftest_args, bytecode):
     gas_price = 100
     tx_amount = 0
     data = bytecode
-    memo = 'test_create_hrc20_token_contract'
+    memo = 'test_deploy_contract'
 
     htdfrpc = HtdfRPC(chaid_id=conftest_args['CHAINID'], rpc_host=conftest_args['RPC_HOST'], rpc_port=conftest_args['RPC_PORT'])
 
@@ -91,8 +91,8 @@ def test_create_hrc20_token_contract(conftest_args, bytecode):
     pprint(tx)
 
     assert tx['logs'][0]['success'] == True
-    txlog = tx['logs'][0]['log']
-    txlog = json.loads(txlog)
+    # txlog = tx['logs'][0]['log']
+    # txlog = json.loads(txlog)
 
     assert tx['gas_wanted'] == str(gas_wanted)
     assert int(tx['gas_used']) <= gas_wanted
@@ -127,8 +127,11 @@ def test_create_hrc20_token_contract(conftest_args, bytecode):
     assert from_acc_new.account_number == from_acc.account_number
     assert from_acc_new.balance_satoshi == from_acc.balance_satoshi - (gas_price * int(tx['gas_used']))
 
-    logjson = json.loads(tx['logs'][0]['log'])
-    contract_address = logjson['contract_address']
+    log = tx['logs'][0]['log']
+    conaddr = log[log.find("contract address:") : log.find(", output:")]
+    contract_address = conaddr.replace('contract address:', '').strip()
+    contract_address = Address.hexaddr_to_bech32(contract_address)
+    print(contract_address)
 
     hrc20_contract_address.append(contract_address)
 
@@ -218,7 +221,7 @@ def test_normal_tx_send(conftest_args, to_addr):
 
 
 
-def test_hrc20_transfer(conftest_args, abi):
+def test_placeBet(conftest_args, abi):
     assert len(hrc20_contract_address) > 0
     contract_address = Address(hrc20_contract_address[0])
     htdfrpc = HtdfRPC(chaid_id=conftest_args['CHAINID'], rpc_host=conftest_args['RPC_HOST'], rpc_port=conftest_args['RPC_PORT'])
@@ -263,7 +266,7 @@ def test_hrc20_transfer(conftest_args, abi):
         commit = int(commit.hex(), 16),
         r = r,
         s = s,
-        v = v,
+        # v = v,
     ).buildTransaction_htdf()
 
     data = remove_0x_prefix(placeBetTx['data'])
@@ -382,6 +385,7 @@ def test_ecrecover(conftest_args, abi):
 
 def test_sha3():
     commitLastBlock = unhexlify('%010x' % 100)  # 和uint40对应
+    print(commitLastBlock.hex())
     commit = keccak(unhexlify('%064x' %  99))
     print('0x' + commit.hex())
 
@@ -407,22 +411,19 @@ def main():
 
     # commit = keccak(unhexlify('%064x' % 99))
     # print(commit.hex())
-    # abi, bytecode = parse_truffe_compile_outputs('../build/contracts/Dice2Win.json')
-    abi, bytecode = parse_truffe_compile_outputs('../build/contracts/EcRecoverTest.json')
-    test_create_hrc20_token_contract(conftest_args=PARAMETERS_INNER, bytecode=bytecode)
+    abi, bytecode = parse_truffe_compile_outputs('./build/contracts/Dice2Win.json')
+    # abi, bytecode = parse_truffe_compile_outputs('/data/work/dicegame/build/contracts/EcRecoverTest.json')
+    test_deploy_contract(conftest_args=PARAMETERS_INNER, bytecode=bytecode)
 
     time.sleep(15)
 
-    test_ecrecover(conftest_args=PARAMETERS_INNER, abi=abi)
+    # test_ecrecover(conftest_args=PARAMETERS_INNER, abi=abi)
+    test_normal_tx_send(conftest_args=PARAMETERS_INNER, to_addr=hrc20_contract_address[0])
 
-    # #
-    # test_normal_tx_send(conftest_args=PARAMETERS_INNER, to_addr=hrc20_contract_address[0])
-    # #
-    # time.sleep(15)
-    #
-    # test_get_croupier(conftest_args=PARAMETERS_INNER, abi=abi)
-    #
-    # test_hrc20_transfer(conftest_args=PARAMETERS_INNER, abi=abi)
+    time.sleep(15)
+    test_get_croupier(conftest_args=PARAMETERS_INNER, abi=abi)
+
+    test_placeBet(conftest_args=PARAMETERS_INNER, abi=abi)
 
     pass
 

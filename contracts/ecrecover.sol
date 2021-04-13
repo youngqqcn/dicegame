@@ -1,9 +1,10 @@
-pragma solidity ^0.4.20;
+pragma solidity >=0.4.24 <0.9.0;
+
 
 
 contract  EcRecoverTest {
 
-    function EcRecoverTest() public payable{
+    constructor()  payable{
         
     }
     
@@ -19,7 +20,7 @@ contract  EcRecoverTest {
         return bz;
     }
 
-    function () public payable {
+    function recive() public payable {
     }
 
 }

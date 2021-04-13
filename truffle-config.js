@@ -9,7 +9,10 @@ module.exports = {
         development: {
             host: "127.0.0.1",
             port: 8545,
-            network_id: "*"
+            network_id: "*",
+            BlockLimit: 0x7691b7  ,
+            // gas: 0xfffffffffff,
+            gas: 0
         }
         // test: {
         //   host: "127.0.0.1",
@@ -19,7 +22,7 @@ module.exports = {
     },
     compilers:{
         solc: {
-            version: "0.4.20",
+            version: "0.8.0",
             parser: "solcjs",
             // optimizer: {
             //     enabled: true,
